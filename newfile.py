@@ -1,9 +1,10 @@
 import os
 import subprocess
 import json
+import threading
 
 # ✅ تثبيت المكتبات المطلوبة تلقائيًا
-required_libs = ["discord.py"]
+required_libs = ["discord.py", "flask"]
 for lib in required_libs:
     try:
         __import__(lib.split('.')[0])
@@ -13,6 +14,7 @@ for lib in required_libs:
 import discord
 from discord.ext import commands
 from discord import app_commands
+from flask import Flask
 
 # 🔐 التوكن من متغير البيئة
 TOKEN = os.getenv("DISCORD_TOKEN")
@@ -26,6 +28,7 @@ intents.members = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
+# 📁 مجلد بيانات السيرفرات
 if not os.path.exists("data/guilds"):
     os.makedirs("data/guilds")
 
@@ -194,4 +197,18 @@ async def dtr(ctx, member: discord.Member):
         embed.set_image(url=rep["proof"])
         await ctx.send(embed=embed)
 
+# 🌐 سيرفر ويب صغير لـ UptimeRobot
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return "Bot is Alive ✅"
+
+def run_web():
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
+# تشغيل السيرفر في Thread منفصل
+threading.Thread(target=run_web).start()
+
+# 🚀 تشغيل البوت
 bot.run(TOKEN)
